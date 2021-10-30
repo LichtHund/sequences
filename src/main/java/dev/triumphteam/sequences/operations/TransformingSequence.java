@@ -19,9 +19,9 @@ public final class TransformingSequence<T, R> extends BaseSequence<R> {
 
     @NotNull
     @Override
-    public Iterator<R> getIterator() {
+    public Iterator<R> iterator() {
         return new Iterator<R>() {
-            private final Iterator<T> iterator = sequence.getIterator();
+            private final Iterator<T> iterator = sequence.iterator();
 
             @Override
             public boolean hasNext() {

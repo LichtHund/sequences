@@ -26,9 +26,9 @@ public final class FilterSequence<T> extends BaseSequence<T> {
 
     @NotNull
     @Override
-    public Iterator<T> getIterator() {
+    public Iterator<T> iterator() {
         return new Iterator<T>() {
-            private final Iterator<T> iterator = sequence.getIterator();
+            private final Iterator<T> iterator = sequence.iterator();
             private int nextState = -1; // -1 for unknown, 0 for done, 1 for continue
             private T nextItem = null;
 

@@ -3,6 +3,7 @@ package dev.triumphteam.sequences;
 import dev.triumphteam.sequences.operations.FilterSequence;
 import dev.triumphteam.sequences.operations.TransformingIndexedSequence;
 import dev.triumphteam.sequences.operations.TransformingSequence;
+import dev.triumphteam.sequences.operations.WindowedSequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -40,8 +41,39 @@ public abstract class BaseSequence<T> implements Sequence<T> {
 
     @NotNull
     @Override
+    public <R> Sequence<R> windowed(final int size, final int step, final boolean partialWindows, @NotNull final Function<List<T>, R> transform) {
+        // TODO: 10/30/2021 Kotlin uses reuseBuffer = true, however in here it's only working with false
+        return new WindowedSequence<>(iterator(), size, step, partialWindows, false).map(transform);
+    }
+
+    @NotNull
+    @Override
+    public Sequence<List<T>> windowed(final int size, final int step, final boolean partialWindows) {
+        return new WindowedSequence<>(iterator(), size, step, partialWindows, false);
+    }
+
+    @NotNull
+    @Override
+    public Sequence<List<T>> windowed(final int size, final int step) {
+        return windowed(size, step, false);
+    }
+
+    @NotNull
+    @Override
+    public Sequence<List<T>> windowed(final int size) {
+        return windowed(size, 1);
+    }
+
+    @NotNull
+    @Override
+    public Sequence<List<T>> chunked(final int size) {
+        return windowed(size, size, true);
+    }
+
+    @NotNull
+    @Override
     public <R> R fold(@NotNull final R initial, @NotNull final BiFunction<R, T, R> operation) {
-        final Iterator<T> iterator = getIterator();
+        final Iterator<T> iterator = iterator();
         R accumulator = initial;
         while (iterator.hasNext()) {
             accumulator = operation.apply(accumulator, iterator.next());
@@ -82,7 +114,7 @@ public abstract class BaseSequence<T> implements Sequence<T> {
     @NotNull
     @Override
     public <C extends Collection<T>> Collection<T> toCollection(@NotNull final C destination) {
-        final Iterator<T> iterator = getIterator();
+        final Iterator<T> iterator = iterator();
         while (iterator.hasNext()) {
             destination.add(iterator.next());
         }

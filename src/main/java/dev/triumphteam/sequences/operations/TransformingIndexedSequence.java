@@ -18,9 +18,9 @@ public final class TransformingIndexedSequence<T, R> extends BaseSequence<R> {
 
     @NotNull
     @Override
-    public Iterator<R> getIterator() {
+    public Iterator<R> iterator() {
         return new Iterator<R>() {
-            private final Iterator<T> iterator = sequence.getIterator();
+            private final Iterator<T> iterator = sequence.iterator();
             private int index = 0;
 
             @Override

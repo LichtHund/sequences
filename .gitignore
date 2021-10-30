@@ -25,3 +25,5 @@ test-module/
 gradle.properties
 
 src/main/java/dev/triumphteam/sequences/Testing.java
+
+out/
