@@ -9,14 +9,19 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
 
-public interface Sequence<T> {
+public interface Sequence<T> extends Iterable<T> {
 
     @NotNull
+    @Override
     Iterator<T> iterator();
 
     @NotNull
@@ -26,8 +31,7 @@ public interface Sequence<T> {
 
     @NotNull <R> Sequence<R> mapIndexed(@NotNull final BiFunction<Integer, T, R> transformer);
 
-    @NotNull
-    <R> Sequence<R> windowed(final int size, final int step, final boolean partialWindows, @NotNull final Function<List<T>, R> transform);
+    @NotNull <R> Sequence<R> windowed(final int size, final int step, final boolean partialWindows, @NotNull final Function<List<T>, R> transform);
 
     @NotNull
     Sequence<List<T>> windowed(final int size, final int step, final boolean partialWindows);
@@ -41,7 +45,23 @@ public interface Sequence<T> {
     @NotNull
     Sequence<List<T>> chunked(final int size);
 
+    @NotNull
+    <K> Map<K, List<T>> groupBy(@NotNull final Function<T, K> keySelector);
+
+    @NotNull
+    <K, V> Map<K, List<V>> groupBy(@NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform);
+
+    @NotNull
+    <K, M extends Map<? super K, List<T>>> M groupByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector);
+
+    @NotNull
+    <K, V, M extends Map<? super K, List<V>>> M groupByTo(@NotNull final M destination, final @NotNull Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform);
+
     @NotNull <R> R fold(@NotNull final R initial, @NotNull final BiFunction<R, T, R> operation);
+
+    @NotNull <A, R> R to(@NotNull final Collector<? super T, A, R> collector);
+
+    @NotNull <R> R to(@NotNull final Supplier<R> supplier, @NotNull final BiConsumer<R, ? super T> accumulator, @NotNull final BiConsumer<R, R> combiner);
 
     @NotNull
     List<T> toList();
