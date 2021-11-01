@@ -45,17 +45,30 @@ public interface Sequence<T> extends Iterable<T> {
     @NotNull
     Sequence<List<T>> chunked(final int size);
 
-    @NotNull
-    <K> Map<K, List<T>> groupBy(@NotNull final Function<T, K> keySelector);
+    @NotNull <K, V> Map<K, V> associate(@NotNull final Function<T, Pair<K, V>> transform);
+
+    @NotNull <K> Map<K, T> associateBy(@NotNull final Function<T, K> keySelector);
+
+    @NotNull <K, V> Map<K, V> associateBy(@NotNull final Function<T, K> keySelector, Function<T, V> valueTransform);
+
+    @NotNull <K, M extends Map<? super K, ? super T>> M associateByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector);
+
+    @NotNull <K, V, M extends Map<? super K, ? super V>> M associateByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform);
+
+    @NotNull <K, V, M extends Map<? super K, ? super V>> M associateTo(@NotNull final M destination, @NotNull final Function<T, Pair<K, V>> transform);
+
+    @NotNull <V> Map<T, V> associateWith(@NotNull final Function<T, V> valueSelector);
 
     @NotNull
-    <K, V> Map<K, List<V>> groupBy(@NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform);
+    <V, M extends Map<? super T, ? super V>> M associateWithTo(@NotNull final M destination, @NotNull final Function<T, V> valueSelector);
 
-    @NotNull
-    <K, M extends Map<? super K, List<T>>> M groupByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector);
+    @NotNull <K> Map<K, List<T>> groupBy(@NotNull final Function<T, K> keySelector);
 
-    @NotNull
-    <K, V, M extends Map<? super K, List<V>>> M groupByTo(@NotNull final M destination, final @NotNull Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform);
+    @NotNull <K, V> Map<K, List<V>> groupBy(@NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform);
+
+    @NotNull <K, M extends Map<? super K, List<T>>> M groupByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector);
+
+    @NotNull <K, V, M extends Map<? super K, List<V>>> M groupByTo(@NotNull final M destination, final @NotNull Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform);
 
     @NotNull <R> R fold(@NotNull final R initial, @NotNull final BiFunction<R, T, R> operation);
 

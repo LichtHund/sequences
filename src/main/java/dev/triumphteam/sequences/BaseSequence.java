@@ -75,13 +75,76 @@ public abstract class BaseSequence<T> implements Sequence<T> {
         return windowed(size, size, true);
     }
 
+    @NotNull
     @Override
-    public @NotNull <K> Map<K, List<T>> groupBy(final @NotNull Function<T, K> keySelector) {
+    public <K, V> Map<K, V> associate(@NotNull final Function<T, Pair<K, V>> transform) {
+        return associateTo(new LinkedHashMap<>(), transform);
+    }
+
+    @NotNull
+    @Override
+    public <K> Map<K, T> associateBy(@NotNull final Function<T, K> keySelector) {
+        return associateByTo(new LinkedHashMap<>(), keySelector);
+    }
+
+    @NotNull
+    @Override
+    public <K, V> Map<K, V> associateBy(@NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform) {
+        return associateByTo(new LinkedHashMap<>(), keySelector, valueTransform);
+    }
+
+    @NotNull
+    @Override
+    public <K, M extends Map<? super K, ? super T>> M associateByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector) {
+        for (final T element : this) {
+            destination.put(keySelector.apply(element), element);
+        }
+        return destination;
+    }
+
+    @NotNull
+    @Override
+    public <K, V, M extends Map<? super K, ? super V>> M associateByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform) {
+        for (final T element : this) {
+            destination.put(keySelector.apply(element), valueTransform.apply(element));
+        }
+        return destination;
+    }
+
+    @NotNull
+    @Override
+    public <K, V, M extends Map<? super K, ? super V>> M associateTo(@NotNull final M destination, @NotNull final Function<T, Pair<K, V>> transform) {
+        for (final T element : this) {
+            final Pair<K, V> entry = transform.apply(element);
+            destination.put(entry.getKey(), entry.getValue());
+        }
+        return destination;
+    }
+
+    @NotNull
+    @Override
+    public <V> Map<T, V> associateWith(@NotNull final Function<T, V> valueSelector) {
+        return associateWithTo(new LinkedHashMap<>(), valueSelector);
+    }
+
+    @NotNull
+    @Override
+    public <V, M extends Map<? super T, ? super V>> M associateWithTo(@NotNull final M destination, @NotNull final Function<T, V> valueSelector) {
+        for (final T element : this) {
+            destination.put(element, valueSelector.apply(element));
+        }
+        return destination;
+    }
+
+    @NotNull
+    @Override
+    public <K> Map<K, List<T>> groupBy(@NotNull final Function<T, K> keySelector) {
         return groupByTo(new LinkedHashMap<>(), keySelector);
     }
 
+    @NotNull
     @Override
-    public @NotNull <K, V> Map<K, List<V>> groupBy(@NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform) {
+    public <K, V> Map<K, List<V>> groupBy(@NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform) {
         return groupByTo(new LinkedHashMap<>(), keySelector, valueTransform);
     }
 
@@ -99,7 +162,7 @@ public abstract class BaseSequence<T> implements Sequence<T> {
 
     @NotNull
     @Override
-    public <K, V, M extends Map<? super K, List<V>>> M groupByTo(@NotNull final M destination, final @NotNull Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform) {
+    public <K, V, M extends Map<? super K, List<V>>> M groupByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform) {
         for (final T element : this) {
             final K key = keySelector.apply(element);
             final List<V> list = destination.computeIfAbsent(key, ignored -> new ArrayList<>());
@@ -120,14 +183,16 @@ public abstract class BaseSequence<T> implements Sequence<T> {
         return accumulator;
     }
 
+    @NotNull
     @Override
-    public <A, R> @NotNull R to(final @NotNull Collector<? super T, A, R> collector) {
+    public <A, R> R to(@NotNull final Collector<? super T, A, R> collector) {
         // TODO: 10/30/2021 IMPLEMENTATION
         return null;
     }
 
+    @NotNull
     @Override
-    public <R> @NotNull R to(final @NotNull Supplier<R> supplier, final @NotNull BiConsumer<R, ? super T> accumulator, final @NotNull BiConsumer<R, R> combiner) {
+    public <R> R to(@NotNull final Supplier<R> supplier, @NotNull final BiConsumer<R, ? super T> accumulator, @NotNull final BiConsumer<R, R> combiner) {
         // TODO: 10/30/2021 IMPLEMENTATION
         return null;
     }
@@ -165,9 +230,8 @@ public abstract class BaseSequence<T> implements Sequence<T> {
     @NotNull
     @Override
     public <C extends Collection<T>> Collection<T> toCollection(@NotNull final C destination) {
-        final Iterator<T> iterator = iterator();
-        while (iterator.hasNext()) {
-            destination.add(iterator.next());
+        for (final T t : this) {
+            destination.add(t);
         }
         return destination;
     }
