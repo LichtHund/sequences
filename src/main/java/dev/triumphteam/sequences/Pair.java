@@ -6,30 +6,30 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class Pair<K, V> {
+public final class Pair<A, B> {
 
-    private final K key;
-    private final V value;
+    private final A first;
+    private final B second;
 
-    public Pair(@NotNull final K key, @NotNull final V value) {
-        this.key = key;
-        this.value = value;
+    public Pair(@NotNull final A first, @NotNull final B second) {
+        this.first = first;
+        this.second = second;
     }
 
     @NotNull
     @Contract("_, _ -> new")
-    public static <K, V> Pair<K, V> of(@NotNull final K key, @NotNull final V value) {
-        return new Pair<>(key, value);
+    public static <K, V> Pair<K, V> of(@NotNull final K first, @NotNull final V second) {
+        return new Pair<>(first, second);
     }
 
     @NotNull
-    public K getKey() {
-        return key;
+    public A getFirst() {
+        return first;
     }
 
     @NotNull
-    public V getValue() {
-        return value;
+    public B getSecond() {
+        return second;
     }
 
     @Override
@@ -37,19 +37,19 @@ public final class Pair<K, V> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final Pair<?, ?> pair = (Pair<?, ?>) o;
-        return key.equals(pair.key) && value.equals(pair.value);
+        return first.equals(pair.first) && second.equals(pair.second);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, value);
+        return Objects.hash(first, second);
     }
 
     @Override
     public String toString() {
         return "Pair{" +
-                "key=" + key +
-                ", value=" + value +
+                "first=" + first +
+                ", second=" + second +
                 '}';
     }
 }

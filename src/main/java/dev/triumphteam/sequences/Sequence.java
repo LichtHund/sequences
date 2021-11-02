@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -110,6 +111,8 @@ public interface Sequence<T> extends Iterable<T> {
     Set<T> toSortedSet(@NotNull final Comparator<T> comparator);
 
     @NotNull <C extends Collection<T>> Collection<T> toCollection(@NotNull final C destination);
+
+    void forEachIndexed(@NotNull final BiConsumer<Integer, T> action);
 
     @NotNull
     @Contract("_ -> new")

@@ -28,6 +28,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
+import static dev.triumphteam.sequences.util.SequenceUtils.checkIndexOverflow;
+
 public abstract class BaseSequence<T> implements Sequence<T> {
 
     @NotNull
@@ -163,7 +165,7 @@ public abstract class BaseSequence<T> implements Sequence<T> {
     public <K, V, M extends Map<? super K, ? super V>> M associateTo(@NotNull final M destination, @NotNull final Function<T, Pair<K, V>> transform) {
         for (final T element : this) {
             final Pair<K, V> entry = transform.apply(element);
-            destination.put(entry.getKey(), entry.getValue());
+            destination.put(entry.getFirst(), entry.getSecond());
         }
         return destination;
     }
@@ -283,4 +285,11 @@ public abstract class BaseSequence<T> implements Sequence<T> {
         return destination;
     }
 
+    @Override
+    public void forEachIndexed(@NotNull final BiConsumer<Integer, T> action) {
+        int index = 0;
+        for (final T item : this) {
+            action.accept(checkIndexOverflow(index++), item);
+        }
+    }
 }
