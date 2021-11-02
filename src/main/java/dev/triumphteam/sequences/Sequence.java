@@ -4,17 +4,18 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.text.html.Option;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -32,8 +33,7 @@ public interface Sequence<T> extends Iterable<T> {
     @NotNull
     Sequence<T> filterNot(@NotNull final Predicate<T> predicate);
 
-    @NotNull
-    <R> Sequence<R> filterIsInstance(@NotNull final Class<R> filterClass);
+    @NotNull <R> Sequence<R> filterIsInstance(@NotNull final Class<R> filterClass);
 
     @NotNull
     Sequence<T> filterNotNull();
@@ -59,11 +59,9 @@ public interface Sequence<T> extends Iterable<T> {
     @NotNull
     Sequence<List<T>> chunked(final int size);
 
-    @NotNull
-    <R> Sequence<Pair<T, R>> zip(@NotNull final Sequence<R> other);
+    @NotNull <R> Sequence<Pair<T, R>> zip(@NotNull final Sequence<R> other);
 
-    @NotNull
-    <R, V> Sequence<V> zip(@NotNull final Sequence<R> other, @NotNull final BiFunction<T, R, V> transform);
+    @NotNull <R, V> Sequence<V> zip(@NotNull final Sequence<R> other, @NotNull final BiFunction<T, R, V> transform);
 
     @NotNull <K, V> Map<K, V> associate(@NotNull final Function<T, Pair<K, V>> transform);
 
@@ -90,6 +88,24 @@ public interface Sequence<T> extends Iterable<T> {
     @NotNull <K, V, M extends Map<? super K, List<V>>> M groupByTo(@NotNull final M destination, final @NotNull Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform);
 
     @NotNull <R> R fold(@NotNull final R initial, @NotNull final BiFunction<R, T, R> operation);
+
+    @NotNull Optional<T> first();
+
+    @NotNull Optional<T> first(@NotNull final Predicate<T> predicate);
+
+    @NotNull Optional<T> last();
+
+    @NotNull Optional<T> last(@NotNull final Predicate<T> predicate);
+
+    @NotNull Optional<T> find(@NotNull final Predicate<T> predicate);
+
+    @NotNull Optional<T> firstLast(@NotNull final Predicate<T> predicate);
+
+    @NotNull Optional<T> elementAt(final int index);
+
+    boolean any(@NotNull final Predicate<T> predicate);
+
+    boolean none(@NotNull final Predicate<T> predicate);
 
     @NotNull <A, R> R to(@NotNull final Collector<? super T, A, R> collector);
 

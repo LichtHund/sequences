@@ -18,6 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
@@ -230,6 +231,95 @@ public abstract class BaseSequence<T> implements Sequence<T> {
             accumulator = operation.apply(accumulator, iterator.next());
         }
         return accumulator;
+    }
+
+    @NotNull
+    @Override
+    public Optional<T> first() {
+        final Iterator<T> iterator = iterator();
+        if (!iterator.hasNext()) return Optional.empty();
+        return Optional.of(iterator.next());
+    }
+
+    @NotNull
+    @Override
+    public Optional<T> first(@NotNull final Predicate<T> predicate) {
+        for (final T element : this) {
+            if (predicate.test(element)) return Optional.of(element);
+        }
+        return Optional.empty();
+    }
+
+    @NotNull
+    @Override
+    public Optional<T> last() {
+        final Iterator<T> iterator = iterator();
+        if (!iterator.hasNext()) return Optional.empty();
+        T last = iterator.next();
+        while (iterator.hasNext()) {
+            last = iterator.next();
+        }
+        return Optional.of(last);
+    }
+
+    @NotNull
+    @Override
+    public Optional<T> last(@NotNull final Predicate<T> predicate) {
+        T last = null;
+        boolean found = false;
+
+        for (final T element : this) {
+            if (predicate.test(element)) {
+                last = element;
+                found = true;
+            }
+        }
+
+        if (!found) return Optional.empty();
+        return Optional.of(last);
+    }
+
+    @NotNull
+    @Override
+    public Optional<T> find(@NotNull final Predicate<T> predicate) {
+        return first(predicate);
+    }
+
+    @NotNull
+    @Override
+    public Optional<T> firstLast(@NotNull final Predicate<T> predicate) {
+        return last(predicate);
+    }
+
+    @NotNull
+    @Override
+    public Optional<T> elementAt(final int index) {
+        if (index < 0) return Optional.empty();
+
+        final Iterator<T> iterator = iterator();
+        int count = 0;
+        while (iterator.hasNext()) {
+            final T element = iterator.next();
+            if (index == count++) return Optional.of(element);
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean any(@NotNull final Predicate<T> predicate) {
+        for (final T element : this) {
+            if (predicate.test(element)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean none(@NotNull final Predicate<T> predicate) {
+        for (final T element : this) {
+            if (predicate.test(element)) return false;
+        }
+        return true;
     }
 
     @NotNull
