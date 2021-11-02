@@ -1,6 +1,7 @@
 package dev.triumphteam.sequences;
 
 import dev.triumphteam.sequences.operations.FilterSequence;
+import dev.triumphteam.sequences.operations.MergingSequence;
 import dev.triumphteam.sequences.operations.TransformingIndexedSequence;
 import dev.triumphteam.sequences.operations.TransformingSequence;
 import dev.triumphteam.sequences.operations.WindowedSequence;
@@ -42,6 +43,18 @@ public abstract class BaseSequence<T> implements Sequence<T> {
     @Override
     public <R> Sequence<R> mapIndexed(@NotNull final BiFunction<Integer, T, R> transformer) {
         return new TransformingIndexedSequence<>(this, transformer);
+    }
+
+    @NotNull
+    @Override
+    public <R> Sequence<Pair<T, R>> zip(@NotNull final Sequence<R> other) {
+        return zip(other, Pair::of);
+    }
+
+    @NotNull
+    @Override
+    public <R, V> Sequence<V> zip(@NotNull final Sequence<R> other, @NotNull final BiFunction<T, R, V> transform) {
+        return new MergingSequence<>(this, other, transform);
     }
 
     @NotNull

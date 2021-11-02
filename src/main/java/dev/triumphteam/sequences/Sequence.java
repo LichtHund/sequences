@@ -45,6 +45,12 @@ public interface Sequence<T> extends Iterable<T> {
     @NotNull
     Sequence<List<T>> chunked(final int size);
 
+    @NotNull
+    <R> Sequence<Pair<T, R>> zip(@NotNull final Sequence<R> other);
+
+    @NotNull
+    <R, V> Sequence<V> zip(@NotNull final Sequence<R> other, @NotNull final BiFunction<T, R, V> transform);
+
     @NotNull <K, V> Map<K, V> associate(@NotNull final Function<T, Pair<K, V>> transform);
 
     @NotNull <K> Map<K, T> associateBy(@NotNull final Function<T, K> keySelector);
@@ -59,8 +65,7 @@ public interface Sequence<T> extends Iterable<T> {
 
     @NotNull <V> Map<T, V> associateWith(@NotNull final Function<T, V> valueSelector);
 
-    @NotNull
-    <V, M extends Map<? super T, ? super V>> M associateWithTo(@NotNull final M destination, @NotNull final Function<T, V> valueSelector);
+    @NotNull <V, M extends Map<? super T, ? super V>> M associateWithTo(@NotNull final M destination, @NotNull final Function<T, V> valueSelector);
 
     @NotNull <K> Map<K, List<T>> groupBy(@NotNull final Function<T, K> keySelector);
 
