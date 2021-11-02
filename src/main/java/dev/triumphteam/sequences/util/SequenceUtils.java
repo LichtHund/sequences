@@ -18,4 +18,9 @@ public final class SequenceUtils {
         return (start + n) % capacity;
     }
 
+    // TODO: 10/30/2021 Check what this does in kotlin because it's a `expect` function
+    public static int checkIndexOverflow(final int index) {
+        return index;
+    }
+
 }

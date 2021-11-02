@@ -1,6 +1,7 @@
 package dev.triumphteam.sequences;
 
 import dev.triumphteam.sequences.operations.FilterSequence;
+import dev.triumphteam.sequences.operations.IndexingSequence;
 import dev.triumphteam.sequences.operations.MergingSequence;
 import dev.triumphteam.sequences.operations.TransformingIndexedSequence;
 import dev.triumphteam.sequences.operations.TransformingSequence;
@@ -16,10 +17,12 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -30,7 +33,38 @@ public abstract class BaseSequence<T> implements Sequence<T> {
     @NotNull
     @Override
     public Sequence<T> filter(@NotNull final Predicate<T> predicate) {
-        return new FilterSequence<>(this, predicate);
+        return new FilterSequence<>(this, true, predicate);
+    }
+
+    @NotNull
+    @Override
+    public Sequence<T> filterNot(@NotNull final Predicate<T> predicate) {
+        return new FilterSequence<>(this, false, predicate);
+    }
+
+    @NotNull
+    @Override
+    public <R> Sequence<R> filterIsInstance(@NotNull final Class<R> filterClass) {
+        return (Sequence<R>) filter(it -> filterClass.isInstance(it));
+    }
+
+    @NotNull
+    @Override
+    public Sequence<@NotNull T> filterNotNull() {
+        return filterNot(Objects::isNull);
+    }
+
+    @NotNull
+    @Override
+    public Sequence<T> filterIndexed(@NotNull final BiPredicate<Integer, T> predicate) {
+        // TODO: 11/2/2021 This implementation is really stupid it can definitely be improved
+        return new TransformingSequence<>(
+                new FilterSequence<>(
+                        new IndexingSequence<>(this),
+                        it -> predicate.test(it.getIndex(), it.getValue())
+                ),
+                IndexedValue::getValue
+        );
     }
 
     @NotNull

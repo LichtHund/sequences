@@ -2,6 +2,7 @@ package dev.triumphteam.sequences;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -32,7 +33,7 @@ public final class Pair<K, V> {
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public boolean equals(@Nullable final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final Pair<?, ?> pair = (Pair<?, ?>) o;

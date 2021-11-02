@@ -1,27 +1,26 @@
 package dev.triumphteam.sequences.operations;
 
 import dev.triumphteam.sequences.BaseSequence;
+import dev.triumphteam.sequences.IndexedValue;
 import dev.triumphteam.sequences.Sequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
-import java.util.function.BiFunction;
 
 import static dev.triumphteam.sequences.util.SequenceUtils.checkIndexOverflow;
 
-public final class TransformingIndexedSequence<T, R> extends BaseSequence<R> {
-    private final Sequence<T> sequence;
-    private final BiFunction<Integer, T, R> transformer;
+public final class IndexingSequence<T> extends BaseSequence<IndexedValue<T>> {
 
-    public TransformingIndexedSequence(@NotNull final Sequence<T> sequence, @NotNull final BiFunction<Integer, T, R> transformer) {
+    private final Sequence<T> sequence;
+
+    public IndexingSequence(@NotNull final Sequence<T> sequence) {
         this.sequence = sequence;
-        this.transformer = transformer;
     }
 
     @NotNull
     @Override
-    public Iterator<R> iterator() {
-        return new Iterator<R>() {
+    public  Iterator<IndexedValue<T>> iterator() {
+        return new Iterator<IndexedValue<T>>() {
             private final Iterator<T> iterator = sequence.iterator();
             private int index = 0;
 
@@ -31,8 +30,8 @@ public final class TransformingIndexedSequence<T, R> extends BaseSequence<R> {
             }
 
             @Override
-            public R next() {
-                return transformer.apply(checkIndexOverflow(index++), iterator.next());
+            public IndexedValue<T> next() {
+                return new IndexedValue<>(checkIndexOverflow(++index), iterator.next());
             }
         };
     }

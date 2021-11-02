@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -26,6 +27,18 @@ public interface Sequence<T> extends Iterable<T> {
 
     @NotNull
     Sequence<T> filter(@NotNull final Predicate<T> predicate);
+
+    @NotNull
+    Sequence<T> filterNot(@NotNull final Predicate<T> predicate);
+
+    @NotNull
+    <R> Sequence<R> filterIsInstance(@NotNull final Class<R> filterClass);
+
+    @NotNull
+    Sequence<T> filterNotNull();
+
+    @NotNull
+    Sequence<T> filterIndexed(@NotNull final BiPredicate<Integer, T> predicate);
 
     @NotNull <R> Sequence<R> map(@NotNull final Function<T, R> transformer);
 
