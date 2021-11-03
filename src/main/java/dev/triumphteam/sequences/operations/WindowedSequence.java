@@ -1,6 +1,7 @@
 package dev.triumphteam.sequences.operations;
 
 import dev.triumphteam.sequences.AbstractSequence;
+import dev.triumphteam.sequences.Sequence;
 import dev.triumphteam.sequences.iterator.EmptyIterator;
 import dev.triumphteam.sequences.list.RingBuffer;
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public final class WindowedSequence<T> extends AbstractSequence<List<T>> {
+public final class WindowedSequence<T> extends AbstractSequence<List<T>, Sequence<List<T>>> {
 
     private final Iterator<T> iterator;
     private final int size;

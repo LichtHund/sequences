@@ -34,7 +34,8 @@ import java.util.function.Predicate;
 
 import static dev.triumphteam.sequences.util.SequenceUtils.checkIndexOverflow;
 
-abstract class AbstractSequence<T, S extends AbstractSequence<T, S>> implements BaseSequence<T, S> {
+@SuppressWarnings("unchecked")
+public abstract class AbstractSequence<T, S extends Sequence<T>> implements Sequence<T> {
 
     @NotNull
     @Override
@@ -45,27 +46,26 @@ abstract class AbstractSequence<T, S extends AbstractSequence<T, S>> implements 
     @NotNull
     @Override
     public S filterNot(@NotNull final Predicate<T> predicate) {
-        return  (S)new FilterSequence<>(this, false, predicate);
+        return (S) new FilterSequence<>(this, false, predicate);
     }
 
     @NotNull
     @Override
-    public <R> BaseSequence<R> filterIsInstance(@NotNull final Class<R> filterClass) {
-        //noinspection unchecked
-        return (BaseSequence<R>) filter(filterClass::isInstance);
+    public <R> Sequence<R> filterIsInstance(@NotNull final Class<R> filterClass) {
+        return (Sequence<R>) filter(filterClass::isInstance);
     }
 
     @NotNull
     @Override
-    public BaseSequence<@NotNull T> filterNotNull() {
+    public S filterNotNull() {
         return filterNot(Objects::isNull);
     }
 
     @NotNull
     @Override
-    public BaseSequence<T> filterIndexed(@NotNull final BiPredicate<Integer, T> predicate) {
+    public S filterIndexed(@NotNull final BiPredicate<Integer, T> predicate) {
         // TODO: 11/2/2021 This implementation is really stupid it can definitely be improved
-        return new TransformingSequence<>(
+        return (S) new TransformingSequence<>(
                 new FilterSequence<>(
                         new IndexingSequence<>(this),
                         it -> predicate.test(it.getIndex(), it.getValue())
@@ -76,20 +76,20 @@ abstract class AbstractSequence<T, S extends AbstractSequence<T, S>> implements 
 
     @NotNull
     @Override
-    public <R> BaseSequence<R> map(@NotNull final Function<T, R> transformer) {
+    public <R> Sequence<R> map(@NotNull final Function<T, R> transformer) {
         return new TransformingSequence<>(this, transformer);
     }
 
     @NotNull
     @Override
-    public <R> BaseSequence<R> mapIndexed(@NotNull final BiFunction<Integer, T, R> transformer) {
+    public <R> Sequence<R> mapIndexed(@NotNull final BiFunction<Integer, T, R> transformer) {
         return new TransformingIndexedSequence<>(this, transformer);
     }
 
     @NotNull
     @Override
-    public BaseSequence<T> onEach(@NotNull final Consumer<T> action) {
-        return map(it -> {
+    public S onEach(@NotNull final Consumer<T> action) {
+        return (S) map(it -> {
             action.accept(it);
             return it;
         });
@@ -97,8 +97,8 @@ abstract class AbstractSequence<T, S extends AbstractSequence<T, S>> implements 
 
     @NotNull
     @Override
-    public BaseSequence<T> onEachIndexed(@NotNull final BiConsumer<Integer, T> action) {
-        return mapIndexed((index, it) -> {
+    public S onEachIndexed(@NotNull final BiConsumer<Integer, T> action) {
+        return (S) mapIndexed((index, it) -> {
             action.accept(index, it);
             return it;
         });
@@ -106,19 +106,19 @@ abstract class AbstractSequence<T, S extends AbstractSequence<T, S>> implements 
 
     @NotNull
     @Override
-    public <R> BaseSequence<Pair<T, R>> zip(@NotNull final BaseSequence<R> other) {
+    public <R> Sequence<Pair<T, R>> zip(@NotNull final Sequence<R> other) {
         return zip(other, Pair::of);
     }
 
     @NotNull
     @Override
-    public <R, V> BaseSequence<V> zip(@NotNull final BaseSequence<R> other, @NotNull final BiFunction<T, R, V> transform) {
+    public <R, V> Sequence<V> zip(@NotNull final Sequence<R> other, @NotNull final BiFunction<T, R, V> transform) {
         return new MergingSequence<>(this, other, transform);
     }
 
     @NotNull
     @Override
-    public <R> BaseSequence<R> windowed(
+    public <R> Sequence<R> windowed(
             final int size,
             final int step,
             final boolean partialWindows,
@@ -131,25 +131,25 @@ abstract class AbstractSequence<T, S extends AbstractSequence<T, S>> implements 
 
     @NotNull
     @Override
-    public BaseSequence<List<T>> windowed(final int size, final int step, final boolean partialWindows) {
+    public Sequence<List<T>> windowed(final int size, final int step, final boolean partialWindows) {
         return new WindowedSequence<>(iterator(), size, step, partialWindows, false);
     }
 
     @NotNull
     @Override
-    public BaseSequence<List<T>> windowed(final int size, final int step) {
+    public Sequence<List<T>> windowed(final int size, final int step) {
         return windowed(size, step, false);
     }
 
     @NotNull
     @Override
-    public BaseSequence<List<T>> windowed(final int size) {
+    public Sequence<List<T>> windowed(final int size) {
         return windowed(size, 1);
     }
 
     @NotNull
     @Override
-    public BaseSequence<List<T>> chunked(final int size) {
+    public Sequence<List<T>> chunked(final int size) {
         return windowed(size, size, true);
     }
 

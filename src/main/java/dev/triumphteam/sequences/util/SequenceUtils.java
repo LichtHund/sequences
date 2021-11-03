@@ -23,6 +23,13 @@ public final class SequenceUtils {
         return index;
     }
 
+    public static void checkWindowSizeStep(final int size, final int step) {
+        if (size <= 0 || step <= 0) {
+            if (size != step) throw new IllegalArgumentException("Both size " + size + " and step " + step + " must be greater than zero.");
+            throw new IllegalArgumentException("size " + size + " must be greater than zero.");
+        }
+    }
+
     public static int getProgressionLastElement(final int start, final int end, final int step) {
         if (step > 0) {
             if (start >= end) return end;

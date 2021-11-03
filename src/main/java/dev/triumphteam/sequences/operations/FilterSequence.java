@@ -1,26 +1,26 @@
 package dev.triumphteam.sequences.operations;
 
 import dev.triumphteam.sequences.AbstractSequence;
-import dev.triumphteam.sequences.BaseSequence;
+import dev.triumphteam.sequences.Sequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
-public final class FilterSequence<T> extends AbstractSequence<T> {
+public final class FilterSequence<T> extends AbstractSequence<T, Sequence<T>> {
 
-    private final BaseSequence<T> sequence;
+    private final Sequence<T> sequence;
     private final boolean sendWhen;
     private final Predicate<T> predicate;
 
-    public FilterSequence(@NotNull final BaseSequence<T> sequence, final boolean sendWhen, @NotNull final Predicate<T> predicate) {
+    public FilterSequence(@NotNull final Sequence<T> sequence, final boolean sendWhen, @NotNull final Predicate<T> predicate) {
         this.sequence = sequence;
         this.sendWhen = sendWhen;
         this.predicate = predicate;
     }
 
-    public FilterSequence(@NotNull final BaseSequence<T> sequence, @NotNull final Predicate<T> predicate) {
+    public FilterSequence(@NotNull final Sequence<T> sequence, @NotNull final Predicate<T> predicate) {
         this(sequence, true, predicate);
     }
 

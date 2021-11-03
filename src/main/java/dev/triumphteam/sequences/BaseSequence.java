@@ -1,12 +1,9 @@
 package dev.triumphteam.sequences;
 
-import dev.triumphteam.sequences.range.IntRange;
 import dev.triumphteam.sequences.util.Pair;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -53,7 +50,7 @@ public interface BaseSequence<T, S extends BaseSequence<T, S>> extends Iterable<
     @NotNull
     S filterNot(@NotNull final Predicate<T> predicate);
 
-    @NotNull <R> BaseSequence<R> filterIsInstance(@NotNull final Class<R> filterClass);
+    @NotNull <R> Sequence<R> filterIsInstance(@NotNull final Class<R> filterClass);
 
     @NotNull
     S filterNotNull();
@@ -61,11 +58,11 @@ public interface BaseSequence<T, S extends BaseSequence<T, S>> extends Iterable<
     @NotNull
     S filterIndexed(@NotNull final BiPredicate<Integer, T> predicate);
 
-    @NotNull <R> BaseSequence<R> map(@NotNull final Function<T, R> transformer);
+    @NotNull <R> Sequence<R> map(@NotNull final Function<T, R> transformer);
 
-    @NotNull <R> BaseSequence<R> mapIndexed(@NotNull final BiFunction<Integer, T, R> transformer);
+    @NotNull <R> Sequence<R> mapIndexed(@NotNull final BiFunction<Integer, T, R> transformer);
 
-    @NotNull <R> BaseSequence<R> windowed(
+    @NotNull <R> Sequence<R> windowed(
             final int size,
             final int step,
             final boolean partialWindows,
@@ -73,16 +70,16 @@ public interface BaseSequence<T, S extends BaseSequence<T, S>> extends Iterable<
     );
 
     @NotNull
-    BaseSequence<List<T>> windowed(final int size, final int step, final boolean partialWindows);
+    Sequence<List<T>> windowed(final int size, final int step, final boolean partialWindows);
 
     @NotNull
-    BaseSequence<List<T>> windowed(final int size, final int step);
+    Sequence<List<T>> windowed(final int size, final int step);
 
     @NotNull
-    BaseSequence<List<T>> windowed(final int size);
+    Sequence<List<T>> windowed(final int size);
 
     @NotNull
-    BaseSequence<List<T>> chunked(final int size);
+    Sequence<List<T>> chunked(final int size);
 
     @NotNull
     S onEach(@NotNull final Consumer<T> action);
@@ -90,9 +87,9 @@ public interface BaseSequence<T, S extends BaseSequence<T, S>> extends Iterable<
     @NotNull
     S onEachIndexed(@NotNull final BiConsumer<Integer, T> action);
 
-    @NotNull <R> BaseSequence<Pair<T, R>> zip(@NotNull final BaseSequence<R> other);
+    @NotNull <R> Sequence<Pair<T, R>> zip(@NotNull final Sequence<R> other);
 
-    @NotNull <R, V> BaseSequence<V> zip(@NotNull final BaseSequence<R> other, @NotNull final BiFunction<T, R, V> transform);
+    @NotNull <R, V> Sequence<V> zip(@NotNull final Sequence<R> other, @NotNull final BiFunction<T, R, V> transform);
 
     @NotNull <K, V> Map<K, V> associate(@NotNull final Function<T, Pair<K, V>> transform);
 

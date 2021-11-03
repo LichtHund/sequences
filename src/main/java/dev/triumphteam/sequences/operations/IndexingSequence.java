@@ -1,19 +1,19 @@
 package dev.triumphteam.sequences.operations;
 
 import dev.triumphteam.sequences.AbstractSequence;
+import dev.triumphteam.sequences.Sequence;
 import dev.triumphteam.sequences.util.IndexedValue;
-import dev.triumphteam.sequences.BaseSequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
 import static dev.triumphteam.sequences.util.SequenceUtils.checkIndexOverflow;
 
-public final class IndexingSequence<T> extends AbstractSequence<IndexedValue<T>> {
+public final class IndexingSequence<T> extends AbstractSequence<IndexedValue<T>, Sequence<IndexedValue<T>>> {
 
-    private final BaseSequence<T> sequence;
+    private final Sequence<T> sequence;
 
-    public IndexingSequence(@NotNull final BaseSequence<T> sequence) {
+    public IndexingSequence(@NotNull final Sequence<T> sequence) {
         this.sequence = sequence;
     }
 
