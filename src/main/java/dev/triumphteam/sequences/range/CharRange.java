@@ -1,26 +1,26 @@
 package dev.triumphteam.sequences.range;
 
-import dev.triumphteam.sequences.range.progression.IntProgression;
+import dev.triumphteam.sequences.range.progression.CharProgression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class IntRange extends IntProgression implements ClosedRange<Integer> {
+public final class CharRange extends CharProgression implements ClosedRange<Character> {
 
-    public static final IntRange EMPTY = new IntRange(1, 0);
+    public static final CharRange EMPTY = new CharRange((char) 1, (char) 0);
 
-    private final int start;
-    private final int endInclusive;
+    private final char start;
+    private final char endInclusive;
 
-    public IntRange(final int start, final int endInclusive) {
+    public CharRange(final char start, final char endInclusive) {
         super(start, endInclusive, 1);
         this.start = start;
         this.endInclusive = endInclusive;
     }
 
     @Override
-    public boolean contains(@NotNull final Integer value) {
+    public boolean contains(@NotNull final Character value) {
         return start <= value && value <= endInclusive;
     }
 
@@ -36,13 +36,13 @@ public final class IntRange extends IntProgression implements ClosedRange<Intege
 
     @NotNull
     @Override
-    public Integer getStart() {
+    public Character getStart() {
         return start;
     }
 
     @NotNull
     @Override
-    public Integer getEndInclusive() {
+    public Character getEndInclusive() {
         return endInclusive;
     }
 
@@ -50,7 +50,7 @@ public final class IntRange extends IntProgression implements ClosedRange<Intege
     public boolean equals(@Nullable final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final IntRange integers = (IntRange) o;
+        final CharRange integers = (CharRange) o;
         return start == integers.start && endInclusive == integers.endInclusive;
     }
 

@@ -345,7 +345,7 @@ public abstract class AbstractSequence<T, S extends Sequence<T>> implements Sequ
     @Override
     public T elementAt(final int index) {
         final Optional<T> element = optionalElementAt(index);
-        if (element.isEmpty()) throw new NoSuchElementException();
+        if (!element.isPresent()) throw new NoSuchElementException();
         return element.get();
     }
 

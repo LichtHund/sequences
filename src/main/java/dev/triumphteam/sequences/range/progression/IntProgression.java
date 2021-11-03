@@ -1,6 +1,8 @@
-package dev.triumphteam.sequences.range;
+package dev.triumphteam.sequences.range.progression;
 
 import dev.triumphteam.sequences.iterator.IntProgressionIterator;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
@@ -29,6 +31,8 @@ public class IntProgression implements Iterable<Integer> {
      * <p>
      * [step] must be greater than `Int.MIN_VALUE` and not equal to zero.
      */
+    @NotNull
+    @Contract("_, _, _ -> new")
     public static IntProgression fromClosedRange(final int rangeStart, final int rangeEnd, final int step) {
         return new IntProgression(rangeStart, rangeEnd, step);
     }

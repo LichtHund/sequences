@@ -1,5 +1,6 @@
 package dev.triumphteam.sequences;
 
+import dev.triumphteam.sequences.range.CharRange;
 import dev.triumphteam.sequences.range.IntRange;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,19 @@ public interface Sequence<T> extends BaseSequence<T, Sequence<T>> {
             @NotNull
             @Override
             public Iterator<Integer> iterator() {
+                return range.iterator();
+            }
+        };
+    }
+
+    @NotNull
+    @Contract("_, _ -> new")
+    static Sequence<Character> range(final char start, final char end) {
+        final CharRange range = new CharRange(start, end);
+        return new AbstractSequence<Character, Sequence<Character>>() {
+            @NotNull
+            @Override
+            public Iterator<Character> iterator() {
                 return range.iterator();
             }
         };
