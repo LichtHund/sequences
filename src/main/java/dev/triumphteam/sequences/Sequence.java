@@ -1,10 +1,10 @@
 package dev.triumphteam.sequences;
 
+import dev.triumphteam.sequences.range.IntRange;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.text.html.Option;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -16,20 +16,78 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
 
 public interface Sequence<T> extends Iterable<T> {
 
     @NotNull
+    @Contract("_ -> new")
+    static <T> Sequence<T> of(@NotNull final Iterable<T> iterable) {
+        return new BaseSequence<T>() {
+            @NotNull
+            @Override
+            public Iterator<T> iterator() {
+                return iterable.iterator();
+            }
+        };
+    }
+
+    @NotNull
+    @SafeVarargs
+    @Contract("_ -> new")
+    static <T> Sequence<T> of(@Nullable final T... elements) {
+        final List<T> iterable = Arrays.asList(elements);
+        return new BaseSequence<T>() {
+            @NotNull
+            @Override
+            public Iterator<T> iterator() {
+                return iterable.iterator();
+            }
+        };
+    }
+
+    @NotNull
+    @Contract("_, _ -> new")
+    static Sequence<Integer> range(final int start, final int end) {
+        final IntRange range = new IntRange(start, end);
+        return new BaseSequence<Integer>() {
+            @NotNull
+            @Override
+            public Iterator<Integer> iterator() {
+                return range.iterator();
+            }
+        };
+    }
+
+    /**
+     * Returns an Iterator that returns the values from the sequence.
+     * Throws an exception if the sequence is constrained to be iterated once and iterator is invoked the second time.
+     *
+     * @return The sequence's iterator.
+     */
+    @NotNull
     @Override
     Iterator<T> iterator();
 
+    /**
+     * Returns a sequence containing only elements matching the given {@link Predicate}.
+     * The operation is intermediate and stateless.
+     *
+     * @param predicate Predicate to which the sequence should filter.
+     * @return A {@link dev.triumphteam.sequences.operations.FilterSequence}.
+     */
     @NotNull
     Sequence<T> filter(@NotNull final Predicate<T> predicate);
 
+    /**
+     * Returns a sequence containing all elements not matching the given {@link Predicate}.
+     * The operation is intermediate and stateless.
+     *
+     * @param predicate Predicate to which the sequence should filter.
+     * @return A {@link dev.triumphteam.sequences.operations.FilterSequence}.
+     */
     @NotNull
     Sequence<T> filterNot(@NotNull final Predicate<T> predicate);
 
@@ -45,7 +103,12 @@ public interface Sequence<T> extends Iterable<T> {
 
     @NotNull <R> Sequence<R> mapIndexed(@NotNull final BiFunction<Integer, T, R> transformer);
 
-    @NotNull <R> Sequence<R> windowed(final int size, final int step, final boolean partialWindows, @NotNull final Function<List<T>, R> transform);
+    @NotNull <R> Sequence<R> windowed(
+            final int size,
+            final int step,
+            final boolean partialWindows,
+            @NotNull final Function<List<T>, R> transform
+    );
 
     @NotNull
     Sequence<List<T>> windowed(final int size, final int step, final boolean partialWindows);
@@ -59,6 +122,12 @@ public interface Sequence<T> extends Iterable<T> {
     @NotNull
     Sequence<List<T>> chunked(final int size);
 
+    @NotNull
+    Sequence<T> onEach(@NotNull final Consumer<T> action);
+
+    @NotNull
+    Sequence<T> onEachIndexed(@NotNull final BiConsumer<Integer, T> action);
+
     @NotNull <R> Sequence<Pair<T, R>> zip(@NotNull final Sequence<R> other);
 
     @NotNull <R, V> Sequence<V> zip(@NotNull final Sequence<R> other, @NotNull final BiFunction<T, R, V> transform);
@@ -69,23 +138,46 @@ public interface Sequence<T> extends Iterable<T> {
 
     @NotNull <K, V> Map<K, V> associateBy(@NotNull final Function<T, K> keySelector, Function<T, V> valueTransform);
 
-    @NotNull <K, M extends Map<? super K, ? super T>> M associateByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector);
+    @NotNull <K, M extends Map<? super K, ? super T>> M associateByTo(
+            @NotNull final M destination,
+            @NotNull final Function<T, K> keySelector
+    );
 
-    @NotNull <K, V, M extends Map<? super K, ? super V>> M associateByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform);
+    @NotNull <K, V, M extends Map<? super K, ? super V>> M associateByTo(
+            @NotNull final M destination,
+            @NotNull final Function<T, K> keySelector,
+            @NotNull final Function<T, V> valueTransform
+    );
 
-    @NotNull <K, V, M extends Map<? super K, ? super V>> M associateTo(@NotNull final M destination, @NotNull final Function<T, Pair<K, V>> transform);
+    @NotNull <K, V, M extends Map<? super K, ? super V>> M associateTo(
+            @NotNull final M destination,
+            @NotNull final Function<T, Pair<K, V>> transform
+    );
 
     @NotNull <V> Map<T, V> associateWith(@NotNull final Function<T, V> valueSelector);
 
-    @NotNull <V, M extends Map<? super T, ? super V>> M associateWithTo(@NotNull final M destination, @NotNull final Function<T, V> valueSelector);
+    @NotNull <V, M extends Map<? super T, ? super V>> M associateWithTo(
+            @NotNull final M destination,
+            @NotNull final Function<T, V> valueSelector
+    );
 
     @NotNull <K> Map<K, List<T>> groupBy(@NotNull final Function<T, K> keySelector);
 
-    @NotNull <K, V> Map<K, List<V>> groupBy(@NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform);
+    @NotNull <K, V> Map<K, List<V>> groupBy(
+            @NotNull final Function<T, K> keySelector,
+            @NotNull final Function<T, V> valueTransform
+    );
 
-    @NotNull <K, M extends Map<? super K, List<T>>> M groupByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector);
+    @NotNull <K, M extends Map<? super K, List<T>>> M groupByTo(
+            @NotNull final M destination,
+            @NotNull final Function<T, K> keySelector
+    );
 
-    @NotNull <K, V, M extends Map<? super K, List<V>>> M groupByTo(@NotNull final M destination, final @NotNull Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform);
+    @NotNull <K, V, M extends Map<? super K, List<V>>> M groupByTo(
+            @NotNull final M destination,
+            @NotNull final Function<T, K> keySelector,
+            @NotNull final Function<T, V> valueTransform
+    );
 
     @NotNull <R> R fold(@NotNull final R initial, @NotNull final BiFunction<R, T, R> operation);
 
@@ -107,9 +199,52 @@ public interface Sequence<T> extends Iterable<T> {
 
     boolean none(@NotNull final Predicate<T> predicate);
 
-    @NotNull <A, R> R to(@NotNull final Collector<? super T, A, R> collector);
+    @NotNull <A extends Appendable> A joinTo(
+            @NotNull final A buffer,
+            @NotNull final CharSequence separator,
+            @NotNull final CharSequence prefix,
+            @NotNull final CharSequence postfix,
+            final int limit,
+            @NotNull final CharSequence truncated,
+            @Nullable Function<T, CharSequence> transform
+    );
 
-    @NotNull <R> R to(@NotNull final Supplier<R> supplier, @NotNull final BiConsumer<R, ? super T> accumulator, @NotNull final BiConsumer<R, R> combiner);
+    @NotNull
+    String joinToString();
+
+    @NotNull
+    String joinToString(@NotNull final CharSequence separator);
+
+    @NotNull
+    String joinToString(@Nullable final Function<T, CharSequence> transform);
+
+    @NotNull
+    String joinToString(@NotNull final CharSequence separator, @Nullable final Function<T, CharSequence> transform);
+
+    @NotNull
+    String joinToString(
+            @NotNull final CharSequence separator,
+            @NotNull final CharSequence postfix,
+            @Nullable final Function<T, CharSequence> transform
+    );
+
+    @NotNull
+    String joinToString(
+            @NotNull final CharSequence separator,
+            @NotNull final CharSequence prefix,
+            @NotNull final CharSequence postfix,
+            @Nullable final Function<T, CharSequence> transform
+    );
+
+    @NotNull
+    String joinToString(
+            @NotNull final CharSequence separator,
+            @NotNull final CharSequence prefix,
+            @NotNull final CharSequence postfix,
+            final int limit,
+            @NotNull final CharSequence truncated,
+            @Nullable final Function<T, CharSequence> transform
+    );
 
     @NotNull
     List<T> toList();
@@ -130,27 +265,4 @@ public interface Sequence<T> extends Iterable<T> {
 
     void forEachIndexed(@NotNull final BiConsumer<Integer, T> action);
 
-    @NotNull
-    @Contract("_ -> new")
-    static <T> Sequence<T> of(@NotNull final Iterable<T> iterable) {
-        return new BaseSequence<T>() {
-            @Override
-            public @NotNull Iterator<T> iterator() {
-                return iterable.iterator();
-            }
-        };
-    }
-
-    @NotNull
-    @SafeVarargs
-    @Contract("_ -> new")
-    static <T> Sequence<T> of(@NotNull final T @Nullable ... elements) {
-        final List<T> iterable = Arrays.asList(elements);
-        return new BaseSequence<T>() {
-            @Override
-            public @NotNull Iterator<T> iterator() {
-                return iterable.iterator();
-            }
-        };
-    }
 }

@@ -7,7 +7,9 @@ import dev.triumphteam.sequences.operations.TransformingIndexedSequence;
 import dev.triumphteam.sequences.operations.TransformingSequence;
 import dev.triumphteam.sequences.operations.WindowedSequence;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,10 +26,9 @@ import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
 
 import static dev.triumphteam.sequences.util.SequenceUtils.checkIndexOverflow;
 
@@ -48,7 +49,8 @@ public abstract class BaseSequence<T> implements Sequence<T> {
     @NotNull
     @Override
     public <R> Sequence<R> filterIsInstance(@NotNull final Class<R> filterClass) {
-        return (Sequence<R>) filter(it -> filterClass.isInstance(it));
+        //noinspection unchecked
+        return (Sequence<R>) filter(filterClass::isInstance);
     }
 
     @NotNull
@@ -84,6 +86,24 @@ public abstract class BaseSequence<T> implements Sequence<T> {
 
     @NotNull
     @Override
+    public Sequence<T> onEach(@NotNull final Consumer<T> action) {
+        return map(it -> {
+            action.accept(it);
+            return it;
+        });
+    }
+
+    @NotNull
+    @Override
+    public Sequence<T> onEachIndexed(@NotNull final BiConsumer<Integer, T> action) {
+        return mapIndexed((index, it) -> {
+            action.accept(index, it);
+            return it;
+        });
+    }
+
+    @NotNull
+    @Override
     public <R> Sequence<Pair<T, R>> zip(@NotNull final Sequence<R> other) {
         return zip(other, Pair::of);
     }
@@ -96,8 +116,14 @@ public abstract class BaseSequence<T> implements Sequence<T> {
 
     @NotNull
     @Override
-    public <R> Sequence<R> windowed(final int size, final int step, final boolean partialWindows, @NotNull final Function<List<T>, R> transform) {
+    public <R> Sequence<R> windowed(
+            final int size,
+            final int step,
+            final boolean partialWindows,
+            @NotNull final Function<List<T>, R> transform
+    ) {
         // TODO: 10/30/2021 Kotlin uses reuseBuffer = true, however in here it's only working with false
+        //  Kotlin uses coroutines in the windowed sequence which makes it very hard to reproduce here.
         return new WindowedSequence<>(iterator(), size, step, partialWindows, false).map(transform);
     }
 
@@ -145,7 +171,10 @@ public abstract class BaseSequence<T> implements Sequence<T> {
 
     @NotNull
     @Override
-    public <K, M extends Map<? super K, ? super T>> M associateByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector) {
+    public <K, M extends Map<? super K, ? super T>> M associateByTo(
+            @NotNull final M destination,
+            @NotNull final Function<T, K> keySelector
+    ) {
         for (final T element : this) {
             destination.put(keySelector.apply(element), element);
         }
@@ -154,7 +183,11 @@ public abstract class BaseSequence<T> implements Sequence<T> {
 
     @NotNull
     @Override
-    public <K, V, M extends Map<? super K, ? super V>> M associateByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform) {
+    public <K, V, M extends Map<? super K, ? super V>> M associateByTo(
+            @NotNull final M destination,
+            @NotNull final Function<T, K> keySelector,
+            @NotNull final Function<T, V> valueTransform
+    ) {
         for (final T element : this) {
             destination.put(keySelector.apply(element), valueTransform.apply(element));
         }
@@ -163,7 +196,10 @@ public abstract class BaseSequence<T> implements Sequence<T> {
 
     @NotNull
     @Override
-    public <K, V, M extends Map<? super K, ? super V>> M associateTo(@NotNull final M destination, @NotNull final Function<T, Pair<K, V>> transform) {
+    public <K, V, M extends Map<? super K, ? super V>> M associateTo(
+            @NotNull final M destination,
+            @NotNull final Function<T, Pair<K, V>> transform
+    ) {
         for (final T element : this) {
             final Pair<K, V> entry = transform.apply(element);
             destination.put(entry.getFirst(), entry.getSecond());
@@ -179,7 +215,10 @@ public abstract class BaseSequence<T> implements Sequence<T> {
 
     @NotNull
     @Override
-    public <V, M extends Map<? super T, ? super V>> M associateWithTo(@NotNull final M destination, @NotNull final Function<T, V> valueSelector) {
+    public <V, M extends Map<? super T, ? super V>> M associateWithTo(
+            @NotNull final M destination,
+            @NotNull final Function<T, V> valueSelector
+    ) {
         for (final T element : this) {
             destination.put(element, valueSelector.apply(element));
         }
@@ -200,25 +239,30 @@ public abstract class BaseSequence<T> implements Sequence<T> {
 
     @NotNull
     @Override
-    public <K, M extends Map<? super K, List<T>>> M groupByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector) {
+    public <K, M extends Map<? super K, List<T>>> M groupByTo(
+            @NotNull final M destination,
+            @NotNull final Function<T, K> keySelector
+    ) {
         for (final T element : this) {
             final K key = keySelector.apply(element);
             final List<T> list = destination.computeIfAbsent(key, ignored -> new ArrayList<>());
             list.add(element);
         }
-
         return destination;
     }
 
     @NotNull
     @Override
-    public <K, V, M extends Map<? super K, List<V>>> M groupByTo(@NotNull final M destination, @NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform) {
+    public <K, V, M extends Map<? super K, List<V>>> M groupByTo(
+            @NotNull final M destination,
+            @NotNull final Function<T, K> keySelector,
+            @NotNull final Function<T, V> valueTransform
+    ) {
         for (final T element : this) {
             final K key = keySelector.apply(element);
             final List<V> list = destination.computeIfAbsent(key, ignored -> new ArrayList<>());
             list.add(valueTransform.apply(element));
         }
-
         return destination;
     }
 
@@ -324,16 +368,92 @@ public abstract class BaseSequence<T> implements Sequence<T> {
 
     @NotNull
     @Override
-    public <A, R> R to(@NotNull final Collector<? super T, A, R> collector) {
-        // TODO: 10/30/2021 IMPLEMENTATION
-        return null;
+    public <A extends Appendable> A joinTo(
+            @NotNull final A buffer,
+            @NotNull final CharSequence separator,
+            @NotNull final CharSequence prefix,
+            @NotNull final CharSequence postfix,
+            final int limit,
+            @NotNull final CharSequence truncated,
+            @Nullable final Function<T, CharSequence> transform
+    ) {
+        try {
+            buffer.append(prefix);
+            int count = 0;
+            for (final T element : this) {
+                if (++count > 1) buffer.append(separator);
+                if (limit >= 0 && count > limit) break;
+
+                if (transform != null) buffer.append(transform.apply(element));
+                else if (element instanceof CharSequence) buffer.append((CharSequence) element);
+                else if (element instanceof Character) buffer.append((char) element);
+                else buffer.append(element.toString());
+            }
+            if (limit >= 0 && count > limit) buffer.append(truncated);
+            buffer.append(postfix);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return buffer;
     }
 
     @NotNull
     @Override
-    public <R> R to(@NotNull final Supplier<R> supplier, @NotNull final BiConsumer<R, ? super T> accumulator, @NotNull final BiConsumer<R, R> combiner) {
-        // TODO: 10/30/2021 IMPLEMENTATION
-        return null;
+    public String joinToString() {
+        return joinToString(", ");
+    }
+
+    @NotNull
+    @Override
+    public String joinToString(@NotNull final CharSequence separator) {
+        return joinToString(separator, null);
+    }
+
+    @NotNull
+    @Override
+    public String joinToString(@Nullable final Function<T, CharSequence> transform) {
+        return joinToString(", ", transform);
+    }
+
+    @NotNull
+    @Override
+    public String joinToString(@NotNull final CharSequence separator, @Nullable final Function<T, CharSequence> transform) {
+        return joinToString(separator, "", transform);
+    }
+
+    @NotNull
+    @Override
+    public String joinToString(
+            @NotNull final CharSequence separator,
+            @NotNull final CharSequence prefix,
+            @Nullable final Function<T, CharSequence> transform
+    ) {
+        return joinToString(separator, prefix, "", transform);
+    }
+
+    @NotNull
+    @Override
+    public String joinToString(
+            @NotNull final CharSequence separator,
+            @NotNull final CharSequence prefix,
+            @NotNull final CharSequence postfix,
+            @Nullable final Function<T, CharSequence> transform
+    ) {
+        return joinToString(separator, prefix, postfix, -1, "...", transform);
+    }
+
+    @NotNull
+    @Override
+    public String joinToString(
+            @NotNull final CharSequence separator,
+            @NotNull final CharSequence prefix,
+            @NotNull final CharSequence postfix,
+            final int limit,
+            @NotNull final CharSequence truncated,
+            final @Nullable Function<T, CharSequence> transform
+    ) {
+        return joinTo(new StringBuilder(), separator, prefix, postfix, limit, truncated, transform).toString();
     }
 
     @NotNull
