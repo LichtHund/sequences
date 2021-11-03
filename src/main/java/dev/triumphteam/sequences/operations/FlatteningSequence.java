@@ -29,7 +29,7 @@ public final class FlatteningSequence<T, R, E> extends AbstractSequence<E, Seque
     public Iterator<E> iterator() {
         return new Iterator<E>() {
             private final Iterator<T> iterator = sequence.iterator();
-            Iterator<E> itemIterator = null;
+            private Iterator<E> itemIterator = null;
 
             @Override
             public E next() {
