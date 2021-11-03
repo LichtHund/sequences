@@ -1,4 +1,4 @@
-package dev.triumphteam.sequences;
+package dev.triumphteam.sequences.util;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

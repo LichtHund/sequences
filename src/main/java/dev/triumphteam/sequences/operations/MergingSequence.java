@@ -1,21 +1,21 @@
 package dev.triumphteam.sequences.operations;
 
+import dev.triumphteam.sequences.AbstractSequence;
 import dev.triumphteam.sequences.BaseSequence;
-import dev.triumphteam.sequences.Sequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.function.BiFunction;
 
-public final class MergingSequence<T1, T2, V> extends BaseSequence<V> {
+public final class MergingSequence<T1, T2, V> extends AbstractSequence<V> {
 
-    private final Sequence<T1> sequence1;
-    private final Sequence<T2> sequence2;
+    private final BaseSequence<T1> sequence1;
+    private final BaseSequence<T2> sequence2;
     private final BiFunction<T1, T2, V> transform;
 
     public MergingSequence(
-            @NotNull final Sequence<T1> sequence1,
-            @NotNull final Sequence<T2> sequence2,
+            @NotNull final BaseSequence<T1> sequence1,
+            @NotNull final BaseSequence<T2> sequence2,
             @NotNull final BiFunction<T1, T2, V> transform
     ) {
         this.sequence1 = sequence1;

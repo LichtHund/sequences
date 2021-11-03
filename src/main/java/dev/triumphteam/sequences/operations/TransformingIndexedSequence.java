@@ -1,7 +1,7 @@
 package dev.triumphteam.sequences.operations;
 
+import dev.triumphteam.sequences.AbstractSequence;
 import dev.triumphteam.sequences.BaseSequence;
-import dev.triumphteam.sequences.Sequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -9,11 +9,11 @@ import java.util.function.BiFunction;
 
 import static dev.triumphteam.sequences.util.SequenceUtils.checkIndexOverflow;
 
-public final class TransformingIndexedSequence<T, R> extends BaseSequence<R> {
-    private final Sequence<T> sequence;
+public final class TransformingIndexedSequence<T, R> extends AbstractSequence<R> {
+    private final BaseSequence<T> sequence;
     private final BiFunction<Integer, T, R> transformer;
 
-    public TransformingIndexedSequence(@NotNull final Sequence<T> sequence, @NotNull final BiFunction<Integer, T, R> transformer) {
+    public TransformingIndexedSequence(@NotNull final BaseSequence<T> sequence, @NotNull final BiFunction<Integer, T, R> transformer) {
         this.sequence = sequence;
         this.transformer = transformer;
     }

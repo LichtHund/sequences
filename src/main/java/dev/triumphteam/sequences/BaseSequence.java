@@ -1,28 +1,19 @@
 package dev.triumphteam.sequences;
 
-import dev.triumphteam.sequences.operations.FilterSequence;
-import dev.triumphteam.sequences.operations.IndexingSequence;
-import dev.triumphteam.sequences.operations.MergingSequence;
-import dev.triumphteam.sequences.operations.TransformingIndexedSequence;
-import dev.triumphteam.sequences.operations.TransformingSequence;
-import dev.triumphteam.sequences.operations.WindowedSequence;
+import dev.triumphteam.sequences.range.IntRange;
+import dev.triumphteam.sequences.util.Pair;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -30,476 +21,210 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static dev.triumphteam.sequences.util.SequenceUtils.checkIndexOverflow;
+public interface BaseSequence<T, S extends BaseSequence<T, S>> extends Iterable<T> {
 
-public abstract class BaseSequence<T> implements Sequence<T> {
-
+    /**
+     * Returns an Iterator that returns the values from the sequence.
+     * Throws an exception if the sequence is constrained to be iterated once and iterator is invoked the second time.
+     *
+     * @return The sequence's iterator.
+     */
     @NotNull
     @Override
-    public Sequence<T> filter(@NotNull final Predicate<T> predicate) {
-        return new FilterSequence<>(this, true, predicate);
-    }
+    Iterator<T> iterator();
+
+    /**
+     * Returns a sequence containing only elements matching the given {@link Predicate}.
+     * The operation is intermediate and stateless.
+     *
+     * @param predicate Predicate to which the sequence should filter.
+     * @return A {@link dev.triumphteam.sequences.operations.FilterSequence}.
+     */
+    @NotNull
+    S filter(@NotNull final Predicate<T> predicate);
+
+    /**
+     * Returns a sequence containing all elements not matching the given {@link Predicate}.
+     * The operation is intermediate and stateless.
+     *
+     * @param predicate Predicate to which the sequence should filter.
+     * @return A {@link dev.triumphteam.sequences.operations.FilterSequence}.
+     */
+    @NotNull
+    S filterNot(@NotNull final Predicate<T> predicate);
+
+    @NotNull <R> BaseSequence<R> filterIsInstance(@NotNull final Class<R> filterClass);
 
     @NotNull
-    @Override
-    public Sequence<T> filterNot(@NotNull final Predicate<T> predicate) {
-        return new FilterSequence<>(this, false, predicate);
-    }
+    S filterNotNull();
 
     @NotNull
-    @Override
-    public <R> Sequence<R> filterIsInstance(@NotNull final Class<R> filterClass) {
-        //noinspection unchecked
-        return (Sequence<R>) filter(filterClass::isInstance);
-    }
+    S filterIndexed(@NotNull final BiPredicate<Integer, T> predicate);
 
-    @NotNull
-    @Override
-    public Sequence<@NotNull T> filterNotNull() {
-        return filterNot(Objects::isNull);
-    }
+    @NotNull <R> BaseSequence<R> map(@NotNull final Function<T, R> transformer);
 
-    @NotNull
-    @Override
-    public Sequence<T> filterIndexed(@NotNull final BiPredicate<Integer, T> predicate) {
-        // TODO: 11/2/2021 This implementation is really stupid it can definitely be improved
-        return new TransformingSequence<>(
-                new FilterSequence<>(
-                        new IndexingSequence<>(this),
-                        it -> predicate.test(it.getIndex(), it.getValue())
-                ),
-                IndexedValue::getValue
-        );
-    }
+    @NotNull <R> BaseSequence<R> mapIndexed(@NotNull final BiFunction<Integer, T, R> transformer);
 
-    @NotNull
-    @Override
-    public <R> Sequence<R> map(@NotNull final Function<T, R> transformer) {
-        return new TransformingSequence<>(this, transformer);
-    }
-
-    @NotNull
-    @Override
-    public <R> Sequence<R> mapIndexed(@NotNull final BiFunction<Integer, T, R> transformer) {
-        return new TransformingIndexedSequence<>(this, transformer);
-    }
-
-    @NotNull
-    @Override
-    public Sequence<T> onEach(@NotNull final Consumer<T> action) {
-        return map(it -> {
-            action.accept(it);
-            return it;
-        });
-    }
-
-    @NotNull
-    @Override
-    public Sequence<T> onEachIndexed(@NotNull final BiConsumer<Integer, T> action) {
-        return mapIndexed((index, it) -> {
-            action.accept(index, it);
-            return it;
-        });
-    }
-
-    @NotNull
-    @Override
-    public <R> Sequence<Pair<T, R>> zip(@NotNull final Sequence<R> other) {
-        return zip(other, Pair::of);
-    }
-
-    @NotNull
-    @Override
-    public <R, V> Sequence<V> zip(@NotNull final Sequence<R> other, @NotNull final BiFunction<T, R, V> transform) {
-        return new MergingSequence<>(this, other, transform);
-    }
-
-    @NotNull
-    @Override
-    public <R> Sequence<R> windowed(
+    @NotNull <R> BaseSequence<R> windowed(
             final int size,
             final int step,
             final boolean partialWindows,
             @NotNull final Function<List<T>, R> transform
-    ) {
-        // TODO: 10/30/2021 Kotlin uses reuseBuffer = true, however in here it's only working with false
-        //  Kotlin uses coroutines in the windowed sequence which makes it very hard to reproduce here.
-        return new WindowedSequence<>(iterator(), size, step, partialWindows, false).map(transform);
-    }
+    );
 
     @NotNull
-    @Override
-    public Sequence<List<T>> windowed(final int size, final int step, final boolean partialWindows) {
-        return new WindowedSequence<>(iterator(), size, step, partialWindows, false);
-    }
+    BaseSequence<List<T>> windowed(final int size, final int step, final boolean partialWindows);
 
     @NotNull
-    @Override
-    public Sequence<List<T>> windowed(final int size, final int step) {
-        return windowed(size, step, false);
-    }
+    BaseSequence<List<T>> windowed(final int size, final int step);
 
     @NotNull
-    @Override
-    public Sequence<List<T>> windowed(final int size) {
-        return windowed(size, 1);
-    }
+    BaseSequence<List<T>> windowed(final int size);
 
     @NotNull
-    @Override
-    public Sequence<List<T>> chunked(final int size) {
-        return windowed(size, size, true);
-    }
+    BaseSequence<List<T>> chunked(final int size);
 
     @NotNull
-    @Override
-    public <K, V> Map<K, V> associate(@NotNull final Function<T, Pair<K, V>> transform) {
-        return associateTo(new LinkedHashMap<>(), transform);
-    }
+    S onEach(@NotNull final Consumer<T> action);
 
     @NotNull
-    @Override
-    public <K> Map<K, T> associateBy(@NotNull final Function<T, K> keySelector) {
-        return associateByTo(new LinkedHashMap<>(), keySelector);
-    }
+    S onEachIndexed(@NotNull final BiConsumer<Integer, T> action);
 
-    @NotNull
-    @Override
-    public <K, V> Map<K, V> associateBy(@NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform) {
-        return associateByTo(new LinkedHashMap<>(), keySelector, valueTransform);
-    }
+    @NotNull <R> BaseSequence<Pair<T, R>> zip(@NotNull final BaseSequence<R> other);
 
-    @NotNull
-    @Override
-    public <K, M extends Map<? super K, ? super T>> M associateByTo(
+    @NotNull <R, V> BaseSequence<V> zip(@NotNull final BaseSequence<R> other, @NotNull final BiFunction<T, R, V> transform);
+
+    @NotNull <K, V> Map<K, V> associate(@NotNull final Function<T, Pair<K, V>> transform);
+
+    @NotNull <K> Map<K, T> associateBy(@NotNull final Function<T, K> keySelector);
+
+    @NotNull <K, V> Map<K, V> associateBy(@NotNull final Function<T, K> keySelector, Function<T, V> valueTransform);
+
+    @NotNull <K, M extends Map<? super K, ? super T>> M associateByTo(
             @NotNull final M destination,
             @NotNull final Function<T, K> keySelector
-    ) {
-        for (final T element : this) {
-            destination.put(keySelector.apply(element), element);
-        }
-        return destination;
-    }
+    );
 
-    @NotNull
-    @Override
-    public <K, V, M extends Map<? super K, ? super V>> M associateByTo(
+    @NotNull <K, V, M extends Map<? super K, ? super V>> M associateByTo(
             @NotNull final M destination,
             @NotNull final Function<T, K> keySelector,
             @NotNull final Function<T, V> valueTransform
-    ) {
-        for (final T element : this) {
-            destination.put(keySelector.apply(element), valueTransform.apply(element));
-        }
-        return destination;
-    }
+    );
 
-    @NotNull
-    @Override
-    public <K, V, M extends Map<? super K, ? super V>> M associateTo(
+    @NotNull <K, V, M extends Map<? super K, ? super V>> M associateTo(
             @NotNull final M destination,
             @NotNull final Function<T, Pair<K, V>> transform
-    ) {
-        for (final T element : this) {
-            final Pair<K, V> entry = transform.apply(element);
-            destination.put(entry.getFirst(), entry.getSecond());
-        }
-        return destination;
-    }
+    );
 
-    @NotNull
-    @Override
-    public <V> Map<T, V> associateWith(@NotNull final Function<T, V> valueSelector) {
-        return associateWithTo(new LinkedHashMap<>(), valueSelector);
-    }
+    @NotNull <V> Map<T, V> associateWith(@NotNull final Function<T, V> valueSelector);
 
-    @NotNull
-    @Override
-    public <V, M extends Map<? super T, ? super V>> M associateWithTo(
+    @NotNull <V, M extends Map<? super T, ? super V>> M associateWithTo(
             @NotNull final M destination,
             @NotNull final Function<T, V> valueSelector
-    ) {
-        for (final T element : this) {
-            destination.put(element, valueSelector.apply(element));
-        }
-        return destination;
-    }
+    );
 
-    @NotNull
-    @Override
-    public <K> Map<K, List<T>> groupBy(@NotNull final Function<T, K> keySelector) {
-        return groupByTo(new LinkedHashMap<>(), keySelector);
-    }
+    @NotNull <K> Map<K, List<T>> groupBy(@NotNull final Function<T, K> keySelector);
 
-    @NotNull
-    @Override
-    public <K, V> Map<K, List<V>> groupBy(@NotNull final Function<T, K> keySelector, @NotNull final Function<T, V> valueTransform) {
-        return groupByTo(new LinkedHashMap<>(), keySelector, valueTransform);
-    }
+    @NotNull <K, V> Map<K, List<V>> groupBy(
+            @NotNull final Function<T, K> keySelector,
+            @NotNull final Function<T, V> valueTransform
+    );
 
-    @NotNull
-    @Override
-    public <K, M extends Map<? super K, List<T>>> M groupByTo(
+    @NotNull <K, M extends Map<? super K, List<T>>> M groupByTo(
             @NotNull final M destination,
             @NotNull final Function<T, K> keySelector
-    ) {
-        for (final T element : this) {
-            final K key = keySelector.apply(element);
-            final List<T> list = destination.computeIfAbsent(key, ignored -> new ArrayList<>());
-            list.add(element);
-        }
-        return destination;
-    }
+    );
 
-    @NotNull
-    @Override
-    public <K, V, M extends Map<? super K, List<V>>> M groupByTo(
+    @NotNull <K, V, M extends Map<? super K, List<V>>> M groupByTo(
             @NotNull final M destination,
             @NotNull final Function<T, K> keySelector,
             @NotNull final Function<T, V> valueTransform
-    ) {
-        for (final T element : this) {
-            final K key = keySelector.apply(element);
-            final List<V> list = destination.computeIfAbsent(key, ignored -> new ArrayList<>());
-            list.add(valueTransform.apply(element));
-        }
-        return destination;
-    }
+    );
 
-    @NotNull
-    @Override
-    public <R> R fold(@NotNull final R initial, @NotNull final BiFunction<R, T, R> operation) {
-        final Iterator<T> iterator = iterator();
-        R accumulator = initial;
-        while (iterator.hasNext()) {
-            accumulator = operation.apply(accumulator, iterator.next());
-        }
-        return accumulator;
-    }
+    @NotNull <R> R fold(@NotNull final R initial, @NotNull final BiFunction<R, T, R> operation);
 
-    @NotNull
-    @Override
-    public Optional<T> first() {
-        final Iterator<T> iterator = iterator();
-        if (!iterator.hasNext()) return Optional.empty();
-        return Optional.of(iterator.next());
-    }
+    @NotNull Optional<T> first();
 
-    @NotNull
-    @Override
-    public Optional<T> first(@NotNull final Predicate<T> predicate) {
-        for (final T element : this) {
-            if (predicate.test(element)) return Optional.of(element);
-        }
-        return Optional.empty();
-    }
+    @NotNull Optional<T> first(@NotNull final Predicate<T> predicate);
 
-    @NotNull
-    @Override
-    public Optional<T> last() {
-        final Iterator<T> iterator = iterator();
-        if (!iterator.hasNext()) return Optional.empty();
-        T last = iterator.next();
-        while (iterator.hasNext()) {
-            last = iterator.next();
-        }
-        return Optional.of(last);
-    }
+    @NotNull Optional<T> last();
 
-    @NotNull
-    @Override
-    public Optional<T> last(@NotNull final Predicate<T> predicate) {
-        T last = null;
-        boolean found = false;
+    @NotNull Optional<T> last(@NotNull final Predicate<T> predicate);
 
-        for (final T element : this) {
-            if (predicate.test(element)) {
-                last = element;
-                found = true;
-            }
-        }
+    @NotNull Optional<T> find(@NotNull final Predicate<T> predicate);
 
-        if (!found) return Optional.empty();
-        return Optional.of(last);
-    }
+    @NotNull Optional<T> firstLast(@NotNull final Predicate<T> predicate);
 
-    @NotNull
-    @Override
-    public Optional<T> find(@NotNull final Predicate<T> predicate) {
-        return first(predicate);
-    }
+    @NotNull Optional<T> elementAt(final int index);
 
-    @NotNull
-    @Override
-    public Optional<T> firstLast(@NotNull final Predicate<T> predicate) {
-        return last(predicate);
-    }
+    boolean any(@NotNull final Predicate<T> predicate);
 
-    @NotNull
-    @Override
-    public Optional<T> elementAt(final int index) {
-        if (index < 0) return Optional.empty();
+    boolean none(@NotNull final Predicate<T> predicate);
 
-        final Iterator<T> iterator = iterator();
-        int count = 0;
-        while (iterator.hasNext()) {
-            final T element = iterator.next();
-            if (index == count++) return Optional.of(element);
-        }
-
-        return Optional.empty();
-    }
-
-    @Override
-    public boolean any(@NotNull final Predicate<T> predicate) {
-        for (final T element : this) {
-            if (predicate.test(element)) return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean none(@NotNull final Predicate<T> predicate) {
-        for (final T element : this) {
-            if (predicate.test(element)) return false;
-        }
-        return true;
-    }
-
-    @NotNull
-    @Override
-    public <A extends Appendable> A joinTo(
+    @NotNull <A extends Appendable> A joinTo(
             @NotNull final A buffer,
             @NotNull final CharSequence separator,
             @NotNull final CharSequence prefix,
             @NotNull final CharSequence postfix,
             final int limit,
             @NotNull final CharSequence truncated,
-            @Nullable final Function<T, CharSequence> transform
-    ) {
-        try {
-            buffer.append(prefix);
-            int count = 0;
-            for (final T element : this) {
-                if (++count > 1) buffer.append(separator);
-                if (limit >= 0 && count > limit) break;
-
-                if (transform != null) buffer.append(transform.apply(element));
-                else if (element instanceof CharSequence) buffer.append((CharSequence) element);
-                else if (element instanceof Character) buffer.append((char) element);
-                else buffer.append(element.toString());
-            }
-            if (limit >= 0 && count > limit) buffer.append(truncated);
-            buffer.append(postfix);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return buffer;
-    }
+            @Nullable Function<T, CharSequence> transform
+    );
 
     @NotNull
-    @Override
-    public String joinToString() {
-        return joinToString(", ");
-    }
+    String joinToString();
 
     @NotNull
-    @Override
-    public String joinToString(@NotNull final CharSequence separator) {
-        return joinToString(separator, null);
-    }
+    String joinToString(@NotNull final CharSequence separator);
 
     @NotNull
-    @Override
-    public String joinToString(@Nullable final Function<T, CharSequence> transform) {
-        return joinToString(", ", transform);
-    }
+    String joinToString(@Nullable final Function<T, CharSequence> transform);
 
     @NotNull
-    @Override
-    public String joinToString(@NotNull final CharSequence separator, @Nullable final Function<T, CharSequence> transform) {
-        return joinToString(separator, "", transform);
-    }
+    String joinToString(@NotNull final CharSequence separator, @Nullable final Function<T, CharSequence> transform);
 
     @NotNull
-    @Override
-    public String joinToString(
+    String joinToString(
             @NotNull final CharSequence separator,
-            @NotNull final CharSequence prefix,
+            @NotNull final CharSequence postfix,
             @Nullable final Function<T, CharSequence> transform
-    ) {
-        return joinToString(separator, prefix, "", transform);
-    }
+    );
 
     @NotNull
-    @Override
-    public String joinToString(
+    String joinToString(
             @NotNull final CharSequence separator,
             @NotNull final CharSequence prefix,
             @NotNull final CharSequence postfix,
             @Nullable final Function<T, CharSequence> transform
-    ) {
-        return joinToString(separator, prefix, postfix, -1, "...", transform);
-    }
+    );
 
     @NotNull
-    @Override
-    public String joinToString(
+    String joinToString(
             @NotNull final CharSequence separator,
             @NotNull final CharSequence prefix,
             @NotNull final CharSequence postfix,
             final int limit,
             @NotNull final CharSequence truncated,
-            final @Nullable Function<T, CharSequence> transform
-    ) {
-        return joinTo(new StringBuilder(), separator, prefix, postfix, limit, truncated, transform).toString();
-    }
+            @Nullable final Function<T, CharSequence> transform
+    );
 
     @NotNull
-    @Override
-    public List<T> toList() {
-        return (List<T>) toCollection(new ArrayList<>());
-    }
+    List<T> toList();
 
     @NotNull
-    @Override
-    public List<T> toImmutableList() {
-        return Collections.unmodifiableList((List<T>) toCollection(new ArrayList<>()));
-    }
+    List<T> toImmutableList();
 
     @NotNull
-    @Override
-    public Set<T> toSet() {
-        return (Set<T>) toCollection(new LinkedHashSet<>());
-    }
+    Set<T> toSet();
 
     @NotNull
-    @Override
-    public Set<T> toSortedSet() {
-        return (Set<T>) toCollection(new TreeSet<>());
-    }
+    Set<T> toSortedSet();
 
     @NotNull
-    @Override
-    public Set<T> toSortedSet(@NotNull final Comparator<T> comparator) {
-        return (Set<T>) toCollection(new TreeSet<>(comparator));
-    }
+    Set<T> toSortedSet(@NotNull final Comparator<T> comparator);
 
-    @NotNull
-    @Override
-    public <C extends Collection<T>> Collection<T> toCollection(@NotNull final C destination) {
-        for (final T t : this) {
-            destination.add(t);
-        }
-        return destination;
-    }
+    @NotNull <C extends Collection<T>> Collection<T> toCollection(@NotNull final C destination);
 
-    @Override
-    public void forEachIndexed(@NotNull final BiConsumer<Integer, T> action) {
-        int index = 0;
-        for (final T item : this) {
-            action.accept(checkIndexOverflow(index++), item);
-        }
-    }
+    void forEachIndexed(@NotNull final BiConsumer<Integer, T> action);
+
 }

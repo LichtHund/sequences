@@ -1,6 +1,9 @@
 package dev.triumphteam.sequences.range;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public final class IntRange extends IntProgression implements ClosedRange<Integer> {
 
@@ -40,9 +43,22 @@ public final class IntRange extends IntProgression implements ClosedRange<Intege
         return endInclusive;
     }
 
+    @Override
+    public boolean equals(@Nullable final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final IntRange integers = (IntRange) o;
+        return start == integers.start && endInclusive == integers.endInclusive;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(start, endInclusive);
+    }
+
     @NotNull
     @Override
     public String toString() {
-        return "$first..$last";
+        return start + ".." + endInclusive;
     }
 }
