@@ -91,6 +91,8 @@ public interface BaseSequence<T, S extends BaseSequence<T, S>> extends Iterable<
 
     @NotNull <R, V> Sequence<V> zip(@NotNull final Sequence<R> other, @NotNull final BiFunction<T, R, V> transform);
 
+    @NotNull Sequence<T> plus(@NotNull final Sequence<T> sequence);
+
     @NotNull <K, V> Map<K, V> associate(@NotNull final Function<T, Pair<K, V>> transform);
 
     @NotNull <K> Map<K, T> associateBy(@NotNull final Function<T, K> keySelector);

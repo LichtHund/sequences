@@ -122,6 +122,12 @@ public abstract class AbstractSequence<T, S extends Sequence<T>> implements Sequ
 
     @NotNull
     @Override
+    public Sequence<T> plus(@NotNull final Sequence<T> sequence) {
+        return new NestedSequence<>(this, sequence).flatten();
+    }
+
+    @NotNull
+    @Override
     public <R> Sequence<R> windowed(
             final int size,
             final int step,
