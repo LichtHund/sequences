@@ -23,4 +23,28 @@ public final class SequenceUtils {
         return index;
     }
 
+    public static int getProgressionLastElement(final int start, final int end, final int step) {
+        if (step > 0) {
+            if (start >= end) return end;
+            return end - differenceModulo(end, start, step);
+        }
+
+        if (step < 0) {
+            if (start <= end) return end;
+            return end - differenceModulo(start, end, -step);
+        }
+
+        throw new IllegalArgumentException("Step is zero.");
+    }
+
+    private static int differenceModulo(final int a, final int b, final int c) {
+        return mod(mod(a, c) - mod(b, c), c);
+    }
+
+    private static int mod(final int a, final int b) {
+        final int mod = a % b;
+        if (mod >= 0) return mod;
+        return mod + b;
+    }
+
 }
