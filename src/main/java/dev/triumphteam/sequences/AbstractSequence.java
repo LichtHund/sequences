@@ -21,9 +21,11 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SplittableRandom;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -36,6 +38,8 @@ import static dev.triumphteam.sequences.util.SequenceUtils.checkIndexOverflow;
 
 @SuppressWarnings("unchecked")
 public abstract class AbstractSequence<T, S extends Sequence<T>> implements Sequence<T> {
+
+    private static final SplittableRandom RANDOM = new SplittableRandom();
 
     @NotNull
     @Override
@@ -339,7 +343,15 @@ public abstract class AbstractSequence<T, S extends Sequence<T>> implements Sequ
 
     @NotNull
     @Override
-    public Optional<T> elementAt(final int index) {
+    public T elementAt(final int index) {
+        final Optional<T> element = optionalElementAt(index);
+        if (element.isEmpty()) throw new NoSuchElementException();
+        return element.get();
+    }
+
+    @NotNull
+    @Override
+    public Optional<T> optionalElementAt(final int index) {
         if (index < 0) return Optional.empty();
 
         final Iterator<T> iterator = iterator();
@@ -350,6 +362,14 @@ public abstract class AbstractSequence<T, S extends Sequence<T>> implements Sequ
         }
 
         return Optional.empty();
+    }
+
+    @NotNull
+    @Override
+    public T random() {
+        // Iterator doesn't have a size, so it uses the toList to get it.
+        // But I think this could be improved.
+        return elementAt(RANDOM.nextInt(toList().size()));
     }
 
     @Override

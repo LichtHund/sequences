@@ -152,7 +152,11 @@ public interface BaseSequence<T, S extends BaseSequence<T, S>> extends Iterable<
 
     @NotNull Optional<T> firstLast(@NotNull final Predicate<T> predicate);
 
-    @NotNull Optional<T> elementAt(final int index);
+    @NotNull Optional<T> optionalElementAt(final int index);
+
+    @NotNull T elementAt(final int index);
+
+    @NotNull T random();
 
     boolean any(@NotNull final Predicate<T> predicate);
 
